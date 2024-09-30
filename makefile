@@ -1,5 +1,5 @@
 #Flags de compilacao
-CFLAGS=-Wall -Wextra -pedantic -std=c++23
+CFLAGS=-Wall -Wextra -pedantic -std=c++23 -g
 LDFLAGS = $(shell pkg-config --cflags --libs opencv4 tinyxml2)
 
 # Diretorios
@@ -23,15 +23,15 @@ OBJS = $(OBJ_FILES) $(OBJ_FACTORY)
 all:$(MAIN)
 
 $(MAIN):$(OBJS)
-	g++ $(CFLAGS) -o $@ $^ $(LDFLAGS)
+	g++ $(CFLAGS) -o $@ $^ $(LDFLAGS) -g
 
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp
 	@mkdir -p $(dir $@)
-	g++ $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
+	g++ $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@ -g
 
 $(BUILD_DIR)/%.o: $(SRCS_FACTORY)/%.cpp
 	@mkdir -p $(dir $@)
-	g++ $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@
+	g++ $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@ -g
 
 clean:
 	rm -rf $(BUILD_DIR)/*.o $(MAIN) *.o

@@ -16,8 +16,7 @@ KNN::KNN(size_t k, std::unique_ptr<ILocalBinaryPatterns> lbp, std::unique_ptr<IC
 
 
 void KNN::generate_data(const std::string& path, const std::string& filename) const {
-  if (!std::filesystem::exists(path) &&
-    std::filesystem::is_directory(path)) {
+  if (!std::filesystem::exists(path)) {
     throw c_knn::DirectoryException{"Directory " + path + " doesn't exists\n"};
   }
 
