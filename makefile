@@ -1,5 +1,5 @@
 #Flags de compilacao
-CFLAGS=-Wall -Wextra -pedantic -std=c++20
+CFLAGS=-Wall -Wextra -pedantic -std=c++23
 LDFLAGS = $(shell pkg-config --cflags --libs opencv4 tinyxml2)
 
 # Diretorios

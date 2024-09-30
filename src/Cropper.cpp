@@ -18,7 +18,7 @@ void Cropper::makeCrop(const std::string& path) {
     throw c_knn::DirectoryException{"Could not find directory " + path + "\n"};
 
   // Cria o diretorio das imagens recortadas
-  const std::string newDir{"PKLotSegmentedOutro"};
+  const std::string newDir{"PKLotSegmented"};
   std::filesystem::create_directory(newDir);
   
   // Vetores que armazenarao os arquivos

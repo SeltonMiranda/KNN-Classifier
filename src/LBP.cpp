@@ -9,7 +9,7 @@ cv::Mat LBP::histogram(const cv::Mat& img) const {
   cv::cvtColor(img, grayImage, cv::COLOR_BGR2GRAY);
 
   if (grayImage.empty()) {
-    throw std::invalid_argument{"Imagem nao existe\n"};
+    throw std::invalid_argument{"Couldn't create gray image\n"};
   }
 
   const int histSize{256};
@@ -43,7 +43,6 @@ cv::Mat LBP::applyLBP(const cv::Mat& img) const {
   }
   return lbpImage;
 }
-
 
 cv::Mat LBP::normalize(const cv::Mat& histogram) const {
   cv::Mat normalizedHist;

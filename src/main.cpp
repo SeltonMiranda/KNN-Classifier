@@ -2,14 +2,14 @@
 #include "../includes/factory/CropperFactory.hpp"
 #include "../includes/KNN.hpp"
 
-
 int main() {
-  c_knn::KNN classifier{3, c_knn::LBPFactory::createBasicLBP(), c_knn::CropperFactory::createPKLotCropper("PKLot")};
+  c_knn::KNN classifier{3, c_knn::LBPFactory::createBasicLBP(), c_knn::CropperFactory::createPKLotCropper("PKLot/PKLot")};
   try {
-    classifier.cropper->makeCrop(classifier.cropper->getFolder());
-    classifier.generate_data("./PKLot/PKLotSegmented/PUCPR", "PUCPR_NORM.csv");
-    classifier.generate_data("./PKLot/PKLotSegmented/UFPR04", "UFPR04_NORM.csv");
-    classifier.generate_data("./PKLot/PKLotSegmented/UFPR05", "UFPR05_NORM.csv");
+
+    //classifier.cropper->makeCrop(classifier.cropper->getFolder());
+    classifier.generate_data("./PKLotSegmented/PUCPR", "PUCPR_NORM.csv");
+    classifier.generate_data("./PKLotSegmented/UFPR04", "UFPR04_NORM.csv");
+    //classifier.generate_data("./PKLot/PKLotSegmented/UFPR05", "UFPR05_NORM.csv");
 
     std::vector<std::vector<float>> x_test;
     std::vector<std::vector<int>> confusion_matrix;
@@ -23,11 +23,11 @@ int main() {
     confusion_matrix = classifier.confusion_matrix(predicted_labels, y_test);
 
     accuracy = classifier.accuracy(confusion_matrix);
+    std::cout << "Accuracy: " << accuracy << std::endl;
 
   } catch (std::exception& e) {
     std::cout << e.what() << std::endl;
   }
 
-  
   return 0;
 }

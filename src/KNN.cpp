@@ -1,5 +1,6 @@
 #include "../includes/KNN.hpp"
 #include "../includes/exception/Exceptions.hpp"
+
 #include <algorithm>
 #include <cmath>
 #include <filesystem>
@@ -11,12 +12,12 @@
 namespace c_knn {
 
 KNN::KNN(size_t k, std::unique_ptr<ILocalBinaryPatterns> lbp, std::unique_ptr<ICrop> cropper)
-  : k_nearest(k), lbp(std::move(lbp)), cropper(std::move(cropper)) {}
+: k_nearest(k), lbp(std::move(lbp)), cropper(std::move(cropper)) {}
 
 
 void KNN::generate_data(const std::string& path, const std::string& filename) const {
   if (!std::filesystem::exists(path) &&
-      std::filesystem::is_directory(path)) {
+    std::filesystem::is_directory(path)) {
     throw c_knn::DirectoryException{"Directory " + path + " doesn't exists\n"};
   }
 
@@ -28,20 +29,22 @@ void KNN::generate_data(const std::string& path, const std::string& filename) co
   for (const auto& climate: std::filesystem::directory_iterator(path)) {
     for (const auto& day: std::filesystem::directory_iterator(climate)) {
       for (const auto& vacancy: std::filesystem::directory_iterator(day)) {
+        for (const auto& file: std::filesystem::directory_iterator(vacancy)) {
 
-        cv::Mat image{cv::imread(vacancy.path().string())};
-        if (image.empty()) {
-          throw c_knn::ImageException{"Couldn't read " + vacancy.path().string() + "\n"};
-        }
-        
-        cv::Mat histogram{this->lbp->histogram(image)};
-        // Converter só para nao colocar um header opencv no .hpp
-        std::vector<float> features_vector(histogram.begin<float>(), histogram.end<float>());
+          cv::Mat image{cv::imread(file.path().string())};
+          if (image.empty()) {
+            throw c_knn::ImageException{"Couldn't read " + file.path().string() + "\n"};
+          }
 
-        if (vacancy.path().filename() == "occupied") {
-          this->save_data(features_vector, csv_file, 1);
-        } else {
-          this->save_data(features_vector, csv_file, 0);
+          cv::Mat histogram{this->lbp->histogram(image)};
+          // Converter só para nao colocar um header opencv no .hpp
+          std::vector<float> features_vector(histogram.begin<float>(), histogram.end<float>());
+
+          if (vacancy.path().filename() == "Occupied") {
+            this->save_data(features_vector, csv_file, 1);
+          } else {
+            this->save_data(features_vector, csv_file, 0);
+          }
         }
       }
     }
@@ -59,14 +62,12 @@ void KNN::save_data(const std::vector<float>& vector, std::ofstream& csv, int la
   csv << std::endl;
 }  
 
-// Parametros de exemplo
-// filename = "PUCPR.csv", x_treino = this->x_treino, y_treino = this->y_treino
 void KNN::extract_data_and_labels(const std::string& filename, std::vector<std::vector<float>>& x,
                                   std::vector<int>& y)
 {
   std::ifstream csv{filename};
   if (!csv) throw c_knn::FileException{"ERROR: Couldn't open " + filename + "\n"};
-  
+
   std::string row;
   // Pega uma linha do csv
   while (std::getline(csv, row)) {
@@ -86,6 +87,7 @@ void KNN::extract_data_and_labels(const std::string& filename, std::vector<std::
     x.push_back(feature_vector);
     y.push_back(label);
   }
+  csv.close();
 }
 
 float KNN::calculate_dist(const std::vector<float>& vector_test,
@@ -139,8 +141,8 @@ std::vector<int> KNN::classify(const std::vector<std::vector<float>>& x_test) co
 
     // Encontra o rótulo que mais apareceu
     int classified_label = (std::max_element(label_count.begin(), label_count.end(),
-                        [](const std::pair<int, int>& a, const std::pair<int, int>& b) {
-                          return a.second < b.second; }))->first;
+                                             [](const std::pair<int, int>& a, const std::pair<int, int>& b) {
+                                             return a.second < b.second; }))->first;
 
     // Insere o rótulo no vetor
     labels.push_back(classified_label);
@@ -169,7 +171,7 @@ float KNN::accuracy(const std::vector<std::vector<int>>& confusion_matrix) const
 
   for (const auto& row: confusion_matrix) {
     for (int val: row) 
-      total += val;
+    total += val;
   }
 
   return static_cast<float>(correct_classified) / total;

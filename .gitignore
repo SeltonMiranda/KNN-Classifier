@@ -1,2 +1,6 @@
 treinamento
 build/
+PKLot/
+PKLotSegmented/
+PKLotSegmented.tar.gz
+*.csv
