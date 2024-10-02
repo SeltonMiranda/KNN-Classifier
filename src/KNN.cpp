@@ -1,5 +1,6 @@
 #include "../includes/KNN.hpp"
 #include "../includes/exception/Exceptions.hpp"
+#include "../includes/constants/Constants.hpp"
 
 #include <algorithm>
 #include <cmath>
@@ -197,20 +198,20 @@ float KNN::accuracy(const std::vector<std::vector<int>>& confusion_matrix) const
 }
 
 void KNN::checks_if_data_exists() const {
-  if (!std::filesystem::exists("./PKLotSegmented")) {
+  if (!std::filesystem::exists(c_knn::Constants::PKLOTSEGMENTED_DIR)) {
       this->cropper->makeCrop(this->cropper->getFolder());
     }
 
-    if (!std::filesystem::exists("pucpr_norm.csv")) {
-      this->generate_data("./PKLotSegmented/PUCPR", "pucpr_norm.csv");
+    if (!std::filesystem::exists(c_knn::Constants::PUCPR_CSV)) {
+      this->generate_data(c_knn::Constants::PUCPR, c_knn::Constants::PUCPR_CSV);
     }
 
-    if (!std::filesystem::exists("ufpr04_norm.csv")) {
-      this->generate_data("./PKLotSegmented/UFPR04", "ufpr04_norm.csv");
+    if (!std::filesystem::exists(c_knn::Constants::UFPR04_CSV)) {
+      this->generate_data(c_knn::Constants::UFPR04, c_knn::Constants::UFPR04_CSV);
     }
 
-    //if (!std::filesystem::exists("ufpr05_norm.csv")) {
-    //  classifier.generate_data("./PKLot/PKLotSegmented/UFPR05", "ufpr05_norm.csv");
+    //if (!std::filesystem::exists(c_knn::Constants::UFPR05_CSV) {
+    //  classifier.generate_data(c_knn::Constants::UFPR05, c_knn::Constants::UFPR05_CSV);
     //}
 }
 
