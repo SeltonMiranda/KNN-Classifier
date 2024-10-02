@@ -7,8 +7,6 @@
 
 namespace c_knn {
 
-// Cropper herda da classe abstrata ICrop, visto que podem existir
-// diferentes tipos de recorte
 class Cropper : public ICrop {
   private:
     std::string folder;

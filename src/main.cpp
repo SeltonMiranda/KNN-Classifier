@@ -2,29 +2,39 @@
 #include "../includes/factory/CropperFactory.hpp"
 #include "../includes/KNN.hpp"
 
+#include <filesystem>
+
 int main() {
-  c_knn::KNN classifier{3, c_knn::LBPFactory::createBasicLBP(), c_knn::CropperFactory::createPKLotCropper("PKLot/PKLot")};
+  c_knn::KNN classifier{3, c_knn::LBPFactory::createBasicLBP(),
+                        c_knn::CropperFactory::createPKLotCropper("PKLot/PKLot")};
 
   try {
 
-    //classifier.cropper->makeCrop(classifier.cropper->getFolder());
-    classifier.generate_data("./PKLotSegmented/PUCPR", "PUCPR_NORM.csv");
-    //classifier.generate_data("./PKLotSegmented/UFPR04", "UFPR04_NORM.csv");
-    //classifier.generate_data("./PKLot/PKLotSegmented/UFPR05", "UFPR05_NORM.csv");
+    //if (!std::filesystem::exists("/PKLotSegmented")) {
+    //  classifier.cropper->makeCrop(classifier.cropper->getFolder());
+    //}
 
-    std::vector<std::vector<float>> x_test;
-    std::vector<std::vector<int>> confusion_matrix;
-    std::vector<int> y_test, predicted_labels;
+    if (!std::filesystem::exists("pucpr_norm.csv")) {
+      classifier.generate_data("./PKLotSegmented/PUCPR", "pucpr_norm.csv");
+    }
+
+    if (!std::filesystem::exists("ufpr04_norm.csv")) {
+      classifier.generate_data("./PKLotSegmented/UFPR04", "ufpr04_norm.csv");
+    }
+
+    //if (!std::filesystem::exists("ufpr05_norm.csv")) {
+    //  classifier.generate_data("./PKLot/PKLotSegmented/UFPR05", "ufpr05_norm.csv");
+    //}
+
     float accuracy{0};
-  
-    classifier.extract_data_and_labels("PUCPR_NORM.csv", classifier.x_train, classifier.y_train);
-    //classifier.extract_data_and_labels("UFPR04_NORM.csv", x_test, y_test);
-    classifier.extract_data_and_labels("PUCPR_NORM.csv", x_test, y_test);
+    classifier.load_sample("pucpr_norm.csv", classifier.x_train, classifier.y_train);
+    classifier.load_sample("ufpr04_norm.csv", classifier.x_test, classifier.y_test);
 
-    predicted_labels = classifier.classify(x_test);
-    confusion_matrix = classifier.confusion_matrix(predicted_labels, y_test);
+    classifier.predicted_labels = classifier.classify(classifier.x_test);
+    classifier.confusion_matrix =
+              classifier.get_confusion_matrix(classifier.predicted_labels, classifier.y_test);
 
-    accuracy = classifier.accuracy(confusion_matrix);
+    accuracy = classifier.accuracy(classifier.confusion_matrix);
     std::cout << "Accuracy: " << accuracy << std::endl;
 
   } catch (std::exception& e) {

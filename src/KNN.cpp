@@ -15,44 +15,36 @@ namespace c_knn {
 KNN::KNN(size_t k, std::unique_ptr<ILocalBinaryPatterns> lbp, std::unique_ptr<ICrop> cropper)
 : k_nearest(k), lbp(std::move(lbp)), cropper(std::move(cropper)) {}
 
-
 void KNN::generate_data(const std::string& path, const std::string& filename) const {
-  if (!std::filesystem::exists(path)) {
+  if (!std::filesystem::exists(path))
     throw c_knn::DirectoryException{"Directory " + path + " doesn't exists\n"};
-  }
 
   std::ofstream csv_file{filename};
-  if (!csv_file) {
+  if (!csv_file.is_open())
     throw c_knn::FileException{"ERROR: Could not open " + filename + "\n"};
-  }
 
-  for (const auto& climate: std::filesystem::directory_iterator(path)) {
-    for (const auto& day: std::filesystem::directory_iterator(climate)) {
-      for (const auto& vacancy: std::filesystem::directory_iterator(day)) {
-        for (const auto& file: std::filesystem::directory_iterator(vacancy)) {
+  for (const auto& entry: std::filesystem::recursive_directory_iterator(path)) {
+    if (entry.is_regular_file()) {
+      cv::Mat image{cv::imread(entry.path().string())};
 
-          cv::Mat image{cv::imread(file.path().string())};
-          if (image.empty()) {
-            throw c_knn::ImageException{"Couldn't read " + file.path().string() + "\n"};
-          }
+      if (image.empty())
+        throw c_knn::ImageException{"Couldn't read " + entry.path().string() + "\n"};
 
-          cv::Mat histogram{this->lbp->histogram(image)};
-          // Converter só para nao colocar um header opencv no .hpp
-          std::vector<float> features_vector(histogram.begin<float>(), histogram.end<float>());
+      cv::Mat histogram{this->lbp->histogram(image)};
+      // Converter só para nao colocar um header opencv no .hpp
+      std::vector<float> features_vector(histogram.begin<float>(), histogram.end<float>());
 
-          if (vacancy.path().filename() == "Occupied") {
-            this->save_data(features_vector, csv_file, 1);
-          } else {
-            this->save_data(features_vector, csv_file, 0);
-          }
-        }
+      if (entry.path().parent_path().filename().string() == "Occupied") {
+        this->save_data_2_csv(features_vector, csv_file, 1);
+      } else {
+        this->save_data_2_csv(features_vector, csv_file, 0);
       }
     }
   }
   csv_file.close();
 }
 
-void KNN::save_data(const std::vector<float>& vector, std::ofstream& csv, int label) const {
+void KNN::save_data_2_csv(const std::vector<float>& vector, std::ofstream& csv, int label) const {
   std::vector<float>::const_iterator it{vector.begin()};
   for (; it != vector.end(); ++it) {
     csv << *it;
@@ -62,9 +54,8 @@ void KNN::save_data(const std::vector<float>& vector, std::ofstream& csv, int la
   csv << std::endl;
 }  
 
-void KNN::extract_data_and_labels(const std::string& filename, std::vector<std::vector<float>>& x,
-                                  std::vector<int>& y)
-{
+void KNN::load_sample(const std::string& filename, std::vector<std::vector<float>>& x,
+                      std::vector<int>& y) {
   std::ifstream csv{filename};
   if (!csv) throw c_knn::FileException{"ERROR: Couldn't open " + filename + "\n"};
 
@@ -73,25 +64,25 @@ void KNN::extract_data_and_labels(const std::string& filename, std::vector<std::
   while (std::getline(csv, row)) {
     std::istringstream rowStream{row};
     std::string value;
-    std::vector<float> feature_vector;
+    std::vector<float> features_vector;
 
     // Pega os valores da linha atual
     while (std::getline(rowStream, value, ',')) 
-      feature_vector.push_back(std::stof(value));
+      features_vector.push_back(std::stof(value));
 
     // Retira o ultimo valor o qual é a classe
-    int label {static_cast<int>(feature_vector.back())};
-    feature_vector.pop_back();
+    int label {static_cast<int>(features_vector.back())};
+    features_vector.pop_back();
 
     // Guarda os valores nos vetores
-    x.push_back(feature_vector);
+    x.push_back(features_vector);
     y.push_back(label);
   }
   csv.close();
 }
 
-float KNN::calculate_dist(const std::vector<float>& vector_test,
-                          const std::vector<float>& vector_train) const 
+float KNN::euclidean_distance(const std::vector<float>& vector_test,
+                              const std::vector<float>& vector_train) const 
 {
   float sum{0.0f};
   for (size_t i = 0; i < vector_test.size(); i++) {
@@ -101,37 +92,23 @@ float KNN::calculate_dist(const std::vector<float>& vector_test,
   return std::sqrt(sum);
 }
 
-std::vector<int> KNN::myArgSort(const std::vector<float>& distances) const {
-  std::vector<int> indexes(distances.size());  
-
-  for (size_t i = 0; i < distances.size(); i++) {
-    indexes[i] = i;
-  }
-
-  // Função lambda
-  std::sort(indexes.begin(), indexes.end(),
-            [&distances](int i1, int i2) { return distances.at(i1) < distances.at(i2); });
-
-  return indexes;
-}
-
 // Retorna um vetor labels de prediçoes
 std::vector<int> KNN::classify(const std::vector<std::vector<float>>& x_test) const {
   std::vector<int> labels;
   for (const auto& feature_vector_test: x_test) {
     // Função lambda para comparação dos valores na min_heap
     auto compare = [](const std::pair<float, int>& a, const std::pair<float, int>& b) {
-      return a.first > b.first;
+      return a.first < b.first;
     };  
 
     // Cria uma min_heap para armazenar as "k" distâncias mais próximas
     std::priority_queue<std::pair<float, int>,
-            std::vector<std::pair<float, int>>,
-            decltype(compare)> min_heap(compare);
-  
+    std::vector<std::pair<float, int>>,
+    decltype(compare)> min_heap(compare);
+
     // Calcula a distancia do vetor de teste com os vetores de treino
     for (std::size_t i = 0; i < this->x_train.size(); i++) {
-      float distance{this->calculate_dist(feature_vector_test, this->x_train[i])};
+      float distance{this->euclidean_distance(feature_vector_test, this->x_train[i])};
       min_heap.push({distance, i});
 
       if (min_heap.size() > this->k_nearest) min_heap.pop();
@@ -147,7 +124,7 @@ std::vector<int> KNN::classify(const std::vector<std::vector<float>>& x_test) co
       label_count[label]++;
       min_heap.pop();
     }
-    
+
     // Encontra o rótulo que mais apareceu
     int classified_label = (std::max_element(label_count.begin(), label_count.end(),
                                              [](const std::pair<int, int>& a, const std::pair<int, int>& b) {
@@ -158,15 +135,13 @@ std::vector<int> KNN::classify(const std::vector<std::vector<float>>& x_test) co
   return labels;
 }
 
-std::vector<std::vector<int>> KNN::confusion_matrix(std::vector<int> classified_labels, std::vector<int> true_labels) const {
+std::vector<std::vector<int>> KNN::get_confusion_matrix(std::vector<int> classified_labels, std::vector<int> true_labels) const {
   std::vector<std::vector<int>> matrix{2, std::vector<int>(2, 0)}; 
-
   for (size_t i = 0; i < true_labels.size(); i++) {
     int true_label{true_labels[i]};
     int classified_label{classified_labels[i]};
     matrix[true_label][classified_label]++;
   }
-
   return matrix;
 }
 
@@ -181,7 +156,6 @@ float KNN::accuracy(const std::vector<std::vector<int>>& confusion_matrix) const
     for (int val: row) 
     total += val;
   }
-
   return static_cast<float>(correct_classified) / total;
 }
 
