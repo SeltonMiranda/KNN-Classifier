@@ -8,6 +8,12 @@ namespace c_knn {
 
 class KNN : public IClassifier {
   private:
+    size_t k_nearest;
+    std::unique_ptr<ILocalBinaryPatterns> lbp; 
+    std::unique_ptr<ICrop> cropper;
+    std::vector<std::vector<float>> x_train, x_test;
+    std::vector<int> y_train, y_test, predicted_labels;
+    std::vector<std::vector<int>> confusion_matrix;
 
     // Salva os dados do vetor de características no csv
     void save_data_2_csv(const std::vector<float>&, std::ofstream& filename, int label) const;  
@@ -16,15 +22,7 @@ class KNN : public IClassifier {
     float euclidean_distance(const std::vector<float>& vector_test,
                               const std::vector<float>& vector_train) const;
   public:
-    size_t k_nearest;
-    std::unique_ptr<ILocalBinaryPatterns> lbp; 
-    std::unique_ptr<ICrop> cropper;
-
-    std::vector<std::vector<float>> x_train, x_test;
-    std::vector<int> y_train, y_test, predicted_labels;
-    std::vector<std::vector<int>> confusion_matrix;
-
-    // Constructor
+        // Constructor
     KNN(size_t k, std::unique_ptr<ILocalBinaryPatterns> lbp, std::unique_ptr<ICrop> cropper);
 
     // Destructor
@@ -43,10 +41,28 @@ class KNN : public IClassifier {
     virtual std::vector<int> classify(const std::vector<std::vector<float>>& x_test) const override;
 
     // Retorna uma matriz de confusão
-    virtual std::vector<std::vector<int>> get_confusion_matrix(std::vector<int> classified_labels,
-                                                           std::vector<int> y_test) const override;
-    
+    virtual std::vector<std::vector<int>> generate_confusion_matrix(const std::vector<int>& classified_labels,
+                                                           const std::vector<int>& y_test) const override;
     // Retorna a acurácia
     virtual float accuracy(const std::vector<std::vector<int>>& confusion_matrix) const override;
+    // Cria o diretório de imagens segmentadas
+    virtual void create_cropped_images() override;
+
+    // Verifica se os dados já existem, caso contrário cria-os
+    virtual void checks_if_data_exists() const override;
+
+    virtual void set_sample_train(const std::string& filename) override;
+    virtual const std::vector<std::vector<float>>& get_x_train() const override;
+    virtual const std::vector<int>& get_y_train() const override;
+
+    virtual void set_sample_test(const std::string& filename) override;
+    virtual const std::vector<std::vector<float>>& get_x_test() const override;
+    virtual const std::vector<int>& get_y_test() const override;
+
+    virtual void set_confusion_matrix(const std::vector<std::vector<int>>& matrix) override;
+    virtual const std::vector<std::vector<int>>& get_confusion_matrix() const override;
+
+    virtual void set_predicted_labels(const std::vector<int>& labels) override;
+    virtual const std::vector<int>& get_predicted_labels() const override;
 };
 }

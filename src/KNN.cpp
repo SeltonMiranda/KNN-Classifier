@@ -15,6 +15,41 @@ namespace c_knn {
 KNN::KNN(size_t k, std::unique_ptr<ILocalBinaryPatterns> lbp, std::unique_ptr<ICrop> cropper)
 : k_nearest(k), lbp(std::move(lbp)), cropper(std::move(cropper)) {}
 
+
+void KNN::create_cropped_images() { this->cropper->makeCrop(this->cropper->getFolder()); }
+
+void KNN::set_sample_train(const std::string& filename) {
+  this->load_sample(filename, this->x_train, this->y_train);
+}
+
+const std::vector<std::vector<float>>& KNN::get_x_train() const { return this->x_train; }
+
+const std::vector<int>& KNN::get_y_train() const { return this->y_train; }
+
+void KNN::set_sample_test(const std::string& filename) {
+  this->load_sample(filename, this->x_test, this->y_test);
+}
+
+const std::vector<std::vector<float>>& KNN::get_x_test() const { return this->x_test; } 
+
+const std::vector<int>& KNN::get_y_test() const { return this->y_test; }
+
+void KNN::set_confusion_matrix(const std::vector<std::vector<int>>& matrix) {
+  this->confusion_matrix = matrix;
+}
+
+const std::vector<std::vector<int>>& KNN::get_confusion_matrix() const {
+  return this->confusion_matrix;
+}
+
+void KNN::set_predicted_labels(const std::vector<int>& labels) {
+  this->predicted_labels = labels;
+}
+
+const std::vector<int>& KNN::get_predicted_labels() const {
+  return this->predicted_labels;
+}
+
 void KNN::generate_data(const std::string& path, const std::string& filename) const {
   if (!std::filesystem::exists(path))
     throw c_knn::DirectoryException{"Directory " + path + " doesn't exists\n"};
@@ -135,7 +170,9 @@ std::vector<int> KNN::classify(const std::vector<std::vector<float>>& x_test) co
   return labels;
 }
 
-std::vector<std::vector<int>> KNN::get_confusion_matrix(std::vector<int> classified_labels, std::vector<int> true_labels) const {
+std::vector<std::vector<int>> KNN::generate_confusion_matrix(const std::vector<int>& classified_labels, 
+                                                             const std::vector<int>& true_labels) const 
+{
   std::vector<std::vector<int>> matrix{2, std::vector<int>(2, 0)}; 
   for (size_t i = 0; i < true_labels.size(); i++) {
     int true_label{true_labels[i]};
@@ -157,6 +194,24 @@ float KNN::accuracy(const std::vector<std::vector<int>>& confusion_matrix) const
     total += val;
   }
   return static_cast<float>(correct_classified) / total;
+}
+
+void KNN::checks_if_data_exists() const {
+  if (!std::filesystem::exists("./PKLotSegmented")) {
+      this->cropper->makeCrop(this->cropper->getFolder());
+    }
+
+    if (!std::filesystem::exists("pucpr_norm.csv")) {
+      this->generate_data("./PKLotSegmented/PUCPR", "pucpr_norm.csv");
+    }
+
+    if (!std::filesystem::exists("ufpr04_norm.csv")) {
+      this->generate_data("./PKLotSegmented/UFPR04", "ufpr04_norm.csv");
+    }
+
+    //if (!std::filesystem::exists("ufpr05_norm.csv")) {
+    //  classifier.generate_data("./PKLot/PKLotSegmented/UFPR05", "ufpr05_norm.csv");
+    //}
 }
 
 }
