@@ -7,6 +7,7 @@
 #include <fstream>
 #include <opencv2/core/mat.hpp>
 #include <ostream>
+#include <queue>
 #include <string>
 
 namespace c_knn {
@@ -117,32 +118,40 @@ std::vector<int> KNN::myArgSort(const std::vector<float>& distances) const {
 // Retorna um vetor labels de prediçoes
 std::vector<int> KNN::classify(const std::vector<std::vector<float>>& x_test) const {
   std::vector<int> labels;
-
   for (const auto& feature_vector_test: x_test) {
-    std::vector<float> distances;
+    // Função lambda para comparação dos valores na min_heap
+    auto compare = [](const std::pair<float, int>& a, const std::pair<float, int>& b) {
+      return a.first > b.first;
+    };  
 
+    // Cria uma min_heap para armazenar as "k" distâncias mais próximas
+    std::priority_queue<std::pair<float, int>,
+            std::vector<std::pair<float, int>>,
+            decltype(compare)> min_heap(compare);
+  
     // Calcula a distancia do vetor de teste com os vetores de treino
-    for (const auto& feature_vector_train: this->x_train) {
-      distances.push_back(this->calculate_dist(feature_vector_test, feature_vector_train));
-    }
+    for (std::size_t i = 0; i < this->x_train.size(); i++) {
+      float distance{this->calculate_dist(feature_vector_test, this->x_train[i])};
+      min_heap.push({distance, i});
 
-    // Ordena as distancias pelos indices
-    std::vector<int> indexes{this->myArgSort(distances)};
+      if (min_heap.size() > this->k_nearest) min_heap.pop();
+    }
 
     // Conta a quantidade dos rótulos nos 3 vizinhos mais próximos
     // first -> rótulo
     // second-> quantidade deste rótulo
     std::map<int, int> label_count;
-    for (size_t i = 0; i < this->k_nearest; i++) {
-      int label{this->y_train.at(indexes.at(i))};
+    while (!min_heap.empty()) {
+      int index{min_heap.top().second};
+      int label{this->y_train.at(index)};
       label_count[label]++;
+      min_heap.pop();
     }
-
+    
     // Encontra o rótulo que mais apareceu
     int classified_label = (std::max_element(label_count.begin(), label_count.end(),
                                              [](const std::pair<int, int>& a, const std::pair<int, int>& b) {
                                              return a.second < b.second; }))->first;
-
     // Insere o rótulo no vetor
     labels.push_back(classified_label);
   }

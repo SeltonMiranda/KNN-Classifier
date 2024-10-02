@@ -129,6 +129,8 @@ std::unique_ptr<RectanglePrototype> Cropper::extractXML(tinyxml2::XMLElement* sp
   if (rect->angle < -45) {
     rect->angle = 90 - std::abs(rect->angle);
     std::swap(rect->width, rect->height);
+  } else {
+    rect->angle = std::abs(rect->angle);
   }
 
   return rect;
