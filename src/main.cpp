@@ -3,6 +3,11 @@
 #include "../includes/KNN.hpp"
 
 int main() {
+  return 0;
+}
+  
+
+int main2() {
   c_knn::KNN classifier{3, c_knn::LBPFactory::createBasicLBP(), c_knn::CropperFactory::createPKLotCropper("PKLot/PKLot")};
   try {
 

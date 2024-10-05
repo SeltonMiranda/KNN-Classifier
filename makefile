@@ -34,4 +34,4 @@ $(BUILD_DIR)/%.o: $(SRCS_FACTORY)/%.cpp
 	g++ $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@ -g
 
 clean:
-	rm -rf $(BUILD_DIR)/*.o $(MAIN) *.o
+	rm -rf $(BUILD_DIR)/*.o $(MAIN) *.o $(BUILD_DIR)
