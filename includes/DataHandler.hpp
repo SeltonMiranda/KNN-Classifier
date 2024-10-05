@@ -13,7 +13,8 @@ class DataHandler : public IDataHandler {
                              std::vector<int>& y) const override;
 
     virtual void preProcessImageData(const std::string& folder) const override;
-    virtual const std::vector<std::vector<float>>& getData() const override;
-    virtual const std::vector<int>&  getLabels() const override;
+    virtual void generate_data(const std::string& inputPath, const std::string outputFile,
+                               const std::unique_ptr<ILocalBinaryPatterns>& descriptor) const override;
+    virtual void save_data(const std::vector<float>&, std::ofstream& filename, int label) const override;  
 };
 } 

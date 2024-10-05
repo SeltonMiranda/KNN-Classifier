@@ -1,10 +1,8 @@
-#include "../includes/LBP.hpp"
-#include <opencv2/core/base.hpp>
-#include <stdexcept>
+#include "../includes/Descriptor.hpp"
 
 namespace c_knn {
 
-cv::Mat LBP::histogram(const cv::Mat& img) const {
+cv::Mat Descriptor::histogram(const cv::Mat& img) const {
   cv::Mat grayImage;
   cv::cvtColor(img, grayImage, cv::COLOR_BGR2GRAY);
 
@@ -23,7 +21,7 @@ cv::Mat LBP::histogram(const cv::Mat& img) const {
   return this->normalize(hist);
 }
 
-cv::Mat LBP::applyLBP(const cv::Mat& img) const {
+cv::Mat Descriptor::applyLBP(const cv::Mat& img) const {
   cv::Mat lbpImage{cv::Mat::zeros(img.rows, img.cols, CV_8UC1)};
   
   for (int i = 1; i < img.rows - 1; i++) {
@@ -44,7 +42,7 @@ cv::Mat LBP::applyLBP(const cv::Mat& img) const {
   return lbpImage;
 }
 
-cv::Mat LBP::normalize(const cv::Mat& histogram) const {
+cv::Mat Descriptor::normalize(const cv::Mat& histogram) const {
   cv::Mat normalizedHist;
   cv::normalize(histogram, normalizedHist, 0, 1, cv::NORM_MINMAX);
   return normalizedHist;

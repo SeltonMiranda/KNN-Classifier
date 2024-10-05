@@ -1,39 +1,39 @@
-#include "../includes/factory/LBPFactory.hpp"
-#include "../includes/factory/CropperFactory.hpp"
 #include "../includes/KNN.hpp"
+#include "../includes/DataHandler.hpp"
+#include "../includes/Descriptor.hpp"
+#include <filesystem>
 
 int main() {
-  return 0;
-}
-  
+  std::unique_ptr<c_knn::IClassifier> knn{std::make_unique<c_knn::KNN>(3)};
+  std::unique_ptr<c_knn::IDataHandler> handler{std::make_unique<c_knn::DataHandler>()};
+  std::unique_ptr<c_knn::ILocalBinaryPatterns> descriptor{std::make_unique<c_knn::Descriptor>()};
+  std::vector<std::vector<float>> X_test;
+  std::vector<int> y_test;
 
-int main2() {
-  c_knn::KNN classifier{3, c_knn::LBPFactory::createBasicLBP(), c_knn::CropperFactory::createPKLotCropper("PKLot/PKLot")};
   try {
+    if (!std::filesystem::exists("./PKLotSegmented"))
+      handler->preProcessImageData("./PKLotSegmented");
+    
+    if (!std::filesystem::exists("pucpr_norm.csv")) 
+      handler->generate_data("./PKLotSegmented/PUCPR", "pucpr_norm.csv", descriptor);
 
-    //classifier.cropper->makeCrop(classifier.cropper->getFolder());
-    classifier.generate_data("./PKLotSegmented/PUCPR", "PUCPR_NORM.csv");
-    //classifier.generate_data("./PKLotSegmented/UFPR04", "UFPR04_NORM.csv");
-    //classifier.generate_data("./PKLot/PKLotSegmented/UFPR05", "UFPR05_NORM.csv");
+    if (!std::filesystem::exists("ufpr04_norm.csv")) 
+      handler->generate_data("./PKLotSegmented/UFPR04", "ufpr04_norm.csv", descriptor);
 
-    std::vector<std::vector<float>> x_test;
-    std::vector<std::vector<int>> confusion_matrix;
-    std::vector<int> y_test, predicted_labels;
-    float accuracy{0};
-  
-    classifier.extract_data_and_labels("PUCPR_NORM.csv", classifier.x_train, classifier.y_train);
-    classifier.extract_data_and_labels("PUCPR_NORM.csv", x_test, y_test);
-    //classifier.extract_data_and_labels("UFPR04_NORM.csv", x_test, y_test);
+    //if (!std::filesystem::exists("ufpr05_norm.csv")) 
+    //  handler->generate_data("./PKLotSegmented/PUCPR", "ufpr05_norm.csv", descriptor);
 
-    predicted_labels = classifier.classify(x_test);
-    confusion_matrix = classifier.confusion_matrix(predicted_labels, y_test);
-
-    accuracy = classifier.accuracy(confusion_matrix);
-    std::cout << "Accuracy: " << accuracy << std::endl;
-
+    knn->set_sample_train(handler, "pucpr_norm.csv");
+    handler->load_sample("ufpr04_norm.csv", X_test, y_test); 
   } catch (std::exception& e) {
     std::cout << e.what() << std::endl;
   }
 
+  std::vector<int> predicted_labels{knn->classify(X_test)};
+  std::vector<std::vector<int>> matrix{knn->confusion_matrix(predicted_labels, y_test)};
+  
+  float accuracy{knn->accuracy(matrix)};
+  std::cout << "Accuracy = " << accuracy << std::endl;
+  
   return 0;
 }
