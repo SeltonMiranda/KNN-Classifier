@@ -4,10 +4,12 @@
 
 namespace c_knn {
 class DataHandler : public IDataHandler {
+  private:
+    virtual void copy_directory_structure(const std::string& dir_path) const override;
+
   public:
     DataHandler() = default;
     virtual ~DataHandler() = default;
-
     virtual void load_sample(const std::string& filename, 
                              std::vector<std::vector<float>>&x,
                              std::vector<int>& y) const override;

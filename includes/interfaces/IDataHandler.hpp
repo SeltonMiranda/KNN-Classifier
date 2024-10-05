@@ -18,5 +18,6 @@ class IDataHandler {
     virtual void generate_data(const std::string& inputPath, const std::string outputFile,
                                const std::unique_ptr<ILocalBinaryPatterns>& descriptor) const = 0;
     virtual void save_data(const std::vector<float>&, std::ofstream& filename, int label) const = 0;  
+    virtual void copy_directory_structure(const std::string& dir_path) const = 0;
 };
 }

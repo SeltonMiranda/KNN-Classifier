@@ -12,7 +12,7 @@
 namespace c_knn {
 
 void DataHandler::load_sample(const std::string& filename, 
-                             std::vector<std::vector<float>>&x, std::vector<int>& y) const 
+                              std::vector<std::vector<float>>&x, std::vector<int>& y) const 
 {
   std::ifstream csv{filename};
   if (!csv) throw c_knn::FileException{"Error: Couldn´t open " + filename};
@@ -36,8 +36,26 @@ void DataHandler::load_sample(const std::string& filename,
   csv.close();
 }
 
+void DataHandler::copy_directory_structure(const std::string& dir_path) const {
+  if (!std::filesystem::exists(dir_path)) {
+    throw c_knn::DirectoryException{"Error: Directory " + dir_path + " doesn't exists"};
+  }
+
+  const std::string new_dir{"PKLotSegmented"};
+  std::filesystem::create_directory(new_dir);
+
+  for (const auto& entry : std::filesystem::recursive_directory_iterator(dir_path)) {
+    if (entry.is_directory()) {
+      const std::string relative_path{std::filesystem::relative(entry.path(), dir_path).string()};
+      const std::string new_path{new_dir + "/" + relative_path};
+      std::filesystem::create_directory(new_path);
+    }
+  }
+}
+
 void DataHandler::preProcessImageData(const std::string& folder) const {
   std::unique_ptr<ICrop> cropper{std::make_unique<Cropper>(folder)};
+  this->copy_directory_structure(folder);
   cropper->makeCrop(cropper->getFolder());
 }
 
@@ -49,27 +67,21 @@ void DataHandler::generate_data(const std::string& inputPath, const std::string 
   std::ofstream output{outputFile};
   if (!output) throw c_knn::FileException{"Error: Couldn't open " + outputFile};
 
-  for (const auto& climate: std::filesystem::directory_iterator(inputPath)) {
-    for (const auto& day: std::filesystem::directory_iterator(climate)) {
-      for (const auto& vacancy: std::filesystem::directory_iterator(day)) {
-        for (const auto& file: std::filesystem::directory_iterator(vacancy)) {
-
-          cv::Mat image{cv::imread(file.path().string())};
-          if (image.empty()) {
-            throw c_knn::ImageException{"Couldn't read " + file.path().string() + "\n"};
-          }
-
-          cv::Mat histogram{descriptor->histogram(image)};
-          // Converter só para nao colocar um header opencv no .hpp
-          std::vector<float> features_vector(histogram.begin<float>(), histogram.end<float>());
-
-          if (vacancy.path().filename() == "Occupied") {
-            this->save_data(features_vector, output, 1);
-          } else {
-            this->save_data(features_vector, output, 0);
-          }
-        }
+  for (const auto& entry : std::filesystem::recursive_directory_iterator(inputPath)) {
+    if (entry.is_regular_file()) {
+      cv::Mat image{cv::imread(entry.path().string())};
+      if (image.empty()) {
+        throw c_knn::ImageException{"Couldn't read " + entry.path().string() + "\n"};
       }
+
+      cv::Mat histogram{descriptor->histogram(image)};
+      // Converter só para nao colocar um header opencv no .hpp
+      std::vector<float> features_vector(histogram.begin<float>(), histogram.end<float>());
+
+      if (entry.path().parent_path().filename() == "Occupied")
+        this->save_data(features_vector, output, 1);
+      else 
+        this->save_data(features_vector, output, 0);
     }
   }
 }

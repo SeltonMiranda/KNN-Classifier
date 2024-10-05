@@ -8,6 +8,5 @@ class ICrop {
   public:
     virtual ~ICrop() = default; 
     virtual void makeCrop(const std::string& path) = 0;
-    virtual const std::string& getFolder() const = 0;
 };
 }

@@ -10,58 +10,32 @@
 
 namespace c_knn {
 
-Cropper::Cropper(const std::string& inputPath) : folder(inputPath) {}
-
 void Cropper::makeCrop(const std::string& path) {
   // Verifica se a pasta existe
   if (!std::filesystem::exists(path))
     throw c_knn::DirectoryException{"Could not find directory " + path + "\n"};
 
-  // Cria o diretorio das imagens recortadas
-  const std::string newDir{"PKLotSegmented"};
-  std::filesystem::create_directory(newDir);
-  
   // Vetores que armazenarao os arquivos
-  std::vector<std::string> vec_xml;
-  std::vector<std::string> vec_jpg;
-
-  // Itera recursivamente nos diretorios
+  std::vector<std::string> xml, jpg;
   for (const auto& file : std::filesystem::recursive_directory_iterator(path)) {
     if (file.is_regular_file()) {
-
-      // Armazena, no vetor, o arquivo, no vetor correspondente a sua extensao
       if (file.path().extension().string() == ".xml")
-        vec_xml.push_back(file.path().string());
+        xml.push_back(file.path().string());
       else if (file.path().extension().string() == ".jpg")
-        vec_jpg.push_back(file.path().string());
-
-    } else if (file.is_directory()) {
-      // Cria o novo diretorio corrente
-      const std::string relative_path{std::filesystem::relative(file.path(), path).string()};
-      const std::string new_path{newDir + "/" + relative_path};
-      std::filesystem::create_directory(new_path);
+        jpg.push_back(file.path().string());
     }
   }
 
-  // Aqui eu estou supondo que há um arquivo ".xml" para cada arquivo ".jpg",
-  // logo ao realizar o sort(), ambos os vetores estarão com os arquivos
-  // ordenados simetricamente, uma vez que têm o mesmo nome e o que os difere
-  // é a extensão.
-  std::sort(vec_xml.begin(), vec_xml.end());
-  std::sort(vec_jpg.begin(), vec_jpg.end());
-
-  for (size_t i = 0; i < vec_xml.size(); i++) {
-    std::string relative{std::filesystem::relative(vec_xml[i], path).parent_path().string()};
-    std::string dateNewPath{newDir + "/" + relative};
-
-    // Cria os diretorios das datas
-    const std::string emptyDir{dateNewPath + "/Empty"};
-    const std::string occupiedDir{dateNewPath + "/Occupied"};
+  std::sort(begin(xml), end(xml));
+  std::sort(begin(jpg), end(jpg));
+  for (size_t i = 0; i < xml.size(); i++) {
+    const std::string relative{std::filesystem::relative(xml[i], path).parent_path().string()};
+    const std::string emptyDir{"./PKLotSegmented/" + relative + "/Empty"};
+    const std::string occupiedDir{"./PKLotSegmented/" + relative + "/Occupied"};
     std::filesystem::create_directory(emptyDir);
     std::filesystem::create_directory(occupiedDir);
-
-    // Recorta as imagens
-    this->cropImages(vec_jpg[i], vec_xml[i], emptyDir, occupiedDir);
+    this->cropImages(jpg[i], xml[i], emptyDir, occupiedDir);
+    break;
   }
 }
 
@@ -126,13 +100,11 @@ std::unique_ptr<RectanglePrototype> Cropper::extractXML(tinyxml2::XMLElement* sp
   angle->QueryIntAttribute("d", &rect->angle);
 
   // Rotaciona o retângulo de acordo com o artigo  
-  if (rect->angle < -45) {
+  if (rect->angle <= -45) {
     rect->angle = 90 - std::abs(rect->angle);
     std::swap(rect->width, rect->height);
   }
 
   return rect;
 }
-
-const std::string& Cropper::getFolder() const { return this->folder; }
 }

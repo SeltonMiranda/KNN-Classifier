@@ -11,7 +11,6 @@ namespace c_knn {
 // diferentes tipos de recorte
 class Cropper : public ICrop {
   private:
-    std::string folder;
     std::unique_ptr<RectanglePrototype> rect; 
 
     // Essa função extrai os dados do xml e retorna uma classe que os contêm.
@@ -23,15 +22,10 @@ class Cropper : public ICrop {
     void cropImages(const std::string& imgPath, const std::string xmlPath,
                     const std::string& emptyPath, const std::string& occupiedPath);
   public:
-    // Construtor
-    Cropper(const std::string& inputPath);
-    // Destrutor
+    Cropper() = default;
     virtual ~Cropper() = default;
 
-    // Configura o ambiente para o recorte das imagens na pasta passada como parâmetro
+    // Recorta as imagens 
     virtual void makeCrop(const std::string& path) override;
-
-    // Retorna o nome da pasta
-    virtual const std::string& getFolder() const override;
 };
 }
