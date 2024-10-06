@@ -35,7 +35,6 @@ void Cropper::makeCrop(const std::string& path) {
     std::filesystem::create_directory(emptyDir);
     std::filesystem::create_directory(occupiedDir);
     this->cropImages(jpg[i], xml[i], emptyDir, occupiedDir);
-    break;
   }
 }
 

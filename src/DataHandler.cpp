@@ -54,9 +54,9 @@ void DataHandler::copy_directory_structure(const std::string& dir_path) const {
 }
 
 void DataHandler::preProcessImageData(const std::string& folder) const {
-  std::unique_ptr<ICrop> cropper{std::make_unique<Cropper>(folder)};
+  std::unique_ptr<ICrop> cropper{std::make_unique<Cropper>()};
   this->copy_directory_structure(folder);
-  cropper->makeCrop(cropper->getFolder());
+  cropper->makeCrop(folder);
 }
 
 void DataHandler::generate_data(const std::string& inputPath, const std::string outputFile,
@@ -71,13 +71,11 @@ void DataHandler::generate_data(const std::string& inputPath, const std::string 
     if (entry.is_regular_file()) {
       cv::Mat image{cv::imread(entry.path().string())};
       if (image.empty()) {
-        throw c_knn::ImageException{"Couldn't read " + entry.path().string() + "\n"};
+        throw c_knn::ImageException{"Couldn't read " + entry.path().string()};
       }
 
       cv::Mat histogram{descriptor->histogram(image)};
-      // Converter só para nao colocar um header opencv no .hpp
       std::vector<float> features_vector(histogram.begin<float>(), histogram.end<float>());
-
       if (entry.path().parent_path().filename() == "Occupied")
         this->save_data(features_vector, output, 1);
       else 
@@ -85,7 +83,6 @@ void DataHandler::generate_data(const std::string& inputPath, const std::string 
     }
   }
 }
-
 
 void DataHandler::save_data(const std::vector<float>& vector, std::ofstream& filename, int label) const {
   std::vector<float>::const_iterator it{begin(vector)};

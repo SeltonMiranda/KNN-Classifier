@@ -31,8 +31,11 @@ int main() {
       std:: cout << "Done!" << std::endl;
     }
 
-    //if (!std::filesystem::exists(c_knn::Constants::UFPR05_CSV)) 
-    //  handler->generate_data(c_knn::Constants::UFPR05, c_knn::Constants::UFPR05_CSV, descriptor);
+    if (!std::filesystem::exists(c_knn::Constants::UFPR05_CSV)) {
+      std::cout << "Creating ufpr05_norm.csv..." << std::endl;
+      handler->generate_data(c_knn::Constants::UFPR05, c_knn::Constants::UFPR05_CSV, descriptor);
+      std:: cout << "Done!" << std::endl;
+    }
     
     knn->set_sample_train(handler, c_knn::Constants::PUCPR_CSV);
     handler->load_sample(c_knn::Constants::UFPR04_CSV, X_test, y_test); 
@@ -48,12 +51,34 @@ int main() {
     std::cout << e.what() << std::endl;
   }
 
-  std::cout << "Classifying testing sample..." << std::endl;
+  std::cout << "Classifying PUCPR x UFPR04" << std::endl;
   std::vector<int> predicted_labels{knn->classify(X_test)};
   std::vector<std::vector<int>> matrix{knn->confusion_matrix(predicted_labels, y_test)};
-  
   float accuracy{knn->accuracy(matrix)};
   std::cout << "Accuracy = " << accuracy << std::endl;
+
+  try {
+    handler->load_sample(c_knn::Constants::UFPR05_CSV, X_test, y_test); 
+  } catch (std::exception& e) {
+    std::cout << e.what() << std::endl;
+  }
   
+  std::cout << "Classifying PUCPR x UFPR05" << std::endl;
+  predicted_labels = knn->classify(X_test);
+  matrix = knn->confusion_matrix(predicted_labels, y_test);
+  accuracy = knn->accuracy(matrix);
+  std::cout << "Accuracy = " << accuracy << std::endl;
+
+  try {
+    handler->load_sample(c_knn::Constants::PUCPR_CSV, X_test, y_test); 
+  } catch (std::exception& e) {
+    std::cout << e.what() << std::endl;
+  }
+
+  std::cout << "Classifying PUCPR x PUCPR" << std::endl;
+  predicted_labels = knn->classify(X_test);
+  matrix = knn->confusion_matrix(predicted_labels, y_test);
+  accuracy = knn->accuracy(matrix);
+  std::cout << "Accuracy = " << accuracy << std::endl;
   return 0;
 }
