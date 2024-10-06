@@ -55,7 +55,7 @@ void DataHandler::copy_directory_structure(const std::string& dir_path) const {
 
 void DataHandler::preProcessImageData(const std::string& folder) const {
   std::unique_ptr<ICrop> cropper{std::make_unique<Cropper>()};
-  this->copy_directory_structure(folder);
+  //this->copy_directory_structure(folder);
   cropper->makeCrop(folder);
 }
 

@@ -6,36 +6,53 @@
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
+#include <string>
 #include <vector>
 
 namespace c_knn {
 
 void Cropper::makeCrop(const std::string& path) {
-  // Verifica se a pasta existe
   if (!std::filesystem::exists(path))
     throw c_knn::DirectoryException{"Could not find directory " + path + "\n"};
 
-  // Vetores que armazenarao os arquivos
-  std::vector<std::string> xml, jpg;
+  const std::string new_dir{"PKLotSegmented"};
+  std::filesystem::create_directory(new_dir);
+
+  std::vector<std::string> xml;
+  std::vector<std::string> jpg;
   for (const auto& file : std::filesystem::recursive_directory_iterator(path)) {
     if (file.is_regular_file()) {
-      if (file.path().extension().string() == ".xml")
-        xml.push_back(file.path().string());
-      else if (file.path().extension().string() == ".jpg")
-        jpg.push_back(file.path().string());
+
+      if (file.path().extension().string() == ".xml") xml.push_back(file.path().string());
+      else if (file.path().extension().string() == ".jpg") jpg.push_back(file.path().string());
+
+    } else if (file.is_directory()) {
+
+      const std::string relative_path{std::filesystem::relative(file.path(), path).string()};
+      const std::string new_path{new_dir + "/" + relative_path};
+      std::filesystem::create_directory(new_path);
+
     }
   }
 
-  std::sort(begin(xml), end(xml));
-  std::sort(begin(jpg), end(jpg));
+  std::sort(xml.begin(), xml.end());
+  std::sort(jpg.begin(), jpg.end());
+
   for (size_t i = 0; i < xml.size(); i++) {
-    const std::string relative{std::filesystem::relative(xml[i], path).parent_path().string()};
-    const std::string emptyDir{"./PKLotSegmented/" + relative + "/Empty"};
-    const std::string occupiedDir{"./PKLotSegmented/" + relative + "/Occupied"};
-    std::filesystem::create_directory(emptyDir);
-    std::filesystem::create_directory(occupiedDir);
-    this->cropImages(jpg[i], xml[i], emptyDir, occupiedDir);
+    std::cout << "xml: " << xml[i] << " jpg: " << jpg[i] << std::endl;
   }
+  exit(1);
+
+  //for (size_t i = 0; i < xml.size(); i++) {
+  //  const std::string relative{std::filesystem::relative(xml[i], path).parent_path().string()};
+  //  const std::string date_new_path{new_dir + "/" + relative};
+  //  const std::string emptyDir{date_new_path + "/Empty"};
+  //  const std::string occupiedDir{date_new_path + "/Occupied"};
+
+  //  std::filesystem::create_directory(emptyDir);
+  //  std::filesystem::create_directory(occupiedDir);
+  //  this->cropImages(jpg[i], xml[i], emptyDir, occupiedDir);
+  //}
 }
 
 void Cropper::cropImages(const std::string& imgPath, const std::string xmlPath,
@@ -76,8 +93,13 @@ void Cropper::cropImages(const std::string& imgPath, const std::string xmlPath,
     const std::string finalName{finalNamestream.str()};
 
     // Insere no diretório correspondente ao id extraído
-    if (rect->occupied) cv::imwrite(occupiedDir + "/" + finalName, outputImage);
-    else cv::imwrite(emptyDir + "/" + finalName, outputImage);
+    if (rect->occupied == 1) {
+      cv::imwrite(occupiedDir + "/" + finalName, outputImage);
+      std::cout << occupiedDir + "/" + finalName << " occupied: " << rect->occupied << std::endl;
+    } else if (rect->occupied == 0) {
+      std::cout << emptyDir + "/" + finalName << " occupied: " << rect->occupied << std::endl;
+      cv::imwrite(emptyDir + "/" + finalName, outputImage);
+    }
   }
 }
 

@@ -6,6 +6,12 @@
 #include <filesystem>
 
 int main() {
+  std::unique_ptr<c_knn::IDataHandler> handler{std::make_unique<c_knn::DataHandler>()};
+  handler->preProcessImageData(c_knn::Constants::PKLOT_DIR);
+  return 0;
+}
+
+int main2() {
   std::unique_ptr<c_knn::IClassifier> knn{std::make_unique<c_knn::KNN>(3)};
   std::unique_ptr<c_knn::IDataHandler> handler{std::make_unique<c_knn::DataHandler>()};
   std::unique_ptr<c_knn::ILocalBinaryPatterns> descriptor{std::make_unique<c_knn::Descriptor>()};
