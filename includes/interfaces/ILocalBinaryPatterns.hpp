@@ -8,8 +8,6 @@ class ILocalBinaryPatterns {
   public:
     ~ILocalBinaryPatterns() = default;
     virtual cv::Mat histogram(const cv::Mat& img) const = 0;
-
-  protected:
     virtual cv::Mat normalize(const cv::Mat& histogram) const = 0;
     virtual cv::Mat applyLBP(const cv::Mat& img) const = 0;
 };

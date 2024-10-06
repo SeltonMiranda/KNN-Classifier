@@ -1,68 +1,33 @@
 #pragma once
 
 #include "./interfaces/IClassifier.hpp"
-#include "./interfaces/ILocalBinaryPatterns.hpp"
-#include "./interfaces/ICrop.hpp"
 
 namespace c_knn {
 
 class KNN : public IClassifier {
   private:
     size_t k_nearest;
-    std::unique_ptr<ILocalBinaryPatterns> lbp; 
-    std::unique_ptr<ICrop> cropper;
-    std::vector<std::vector<float>> x_train, x_test;
-    std::vector<int> y_train, y_test, predicted_labels;
-    std::vector<std::vector<int>> confusion_matrix;
-
-    // Salva os dados do vetor de características no csv
-    void save_data_2_csv(const std::vector<float>&, std::ofstream& filename, int label) const;  
-
+    std::vector<std::vector<float>> X_train;
+    std::vector<int> y_train;
     // Calcula a distância (euclidiana) entre dois vetores
     float euclidean_distance(const std::vector<float>& vector_test,
                               const std::vector<float>& vector_train) const;
   public:
-        // Constructor
-    KNN(size_t k, std::unique_ptr<ILocalBinaryPatterns> lbp, std::unique_ptr<ICrop> cropper);
+   // Constructor
+    KNN(size_t k);
 
     // Destructor
     virtual ~KNN() = default;
 
-    // Cria um arquivo .csv o qual cada linha é um vetor de características de cada imagem
-    // contida no path
-    virtual void generate_data(const std::string& path, const std::string& filename) const override;
-
-    // Extrai os dados do .csv passado no parâmetro, na matriz x ficarão os vetores de características
-    // e no vetor y, as respectivas classes (0: vazio, 1: ocupado)
-    virtual void load_sample(const std::string& filename, std::vector<std::vector<float>>& x,
-                                         std::vector<int>& y) override;
-
     // Classifica o vetor de características teste, retorna um vetor com as classes previstas
     virtual std::vector<int> classify(const std::vector<std::vector<float>>& x_test) const override;
+    std::vector<std::vector<int>> confusion_matrix(const std::vector<int>& classified_labels, 
+                                                             const std::vector<int>& true_labels) const override;
 
-    // Retorna uma matriz de confusão
-    virtual std::vector<std::vector<int>> generate_confusion_matrix(const std::vector<int>& classified_labels,
-                                                           const std::vector<int>& y_test) const override;
     // Retorna a acurácia
     virtual float accuracy(const std::vector<std::vector<int>>& confusion_matrix) const override;
-    // Cria o diretório de imagens segmentadas
-    virtual void create_cropped_images() override;
-
-    // Verifica se os dados já existem, caso contrário cria-os
-    virtual void checks_if_data_exists() const override;
-
-    virtual void set_sample_train(const std::string& filename) override;
-    virtual const std::vector<std::vector<float>>& get_x_train() const override;
+    virtual void set_sample_train(const std::unique_ptr<IDataHandler>& handler, const std::string& filename) override;
+    virtual const std::vector<std::vector<float>>& get_X_train() const override;
     virtual const std::vector<int>& get_y_train() const override;
-
-    virtual void set_sample_test(const std::string& filename) override;
-    virtual const std::vector<std::vector<float>>& get_x_test() const override;
-    virtual const std::vector<int>& get_y_test() const override;
-
-    virtual void set_confusion_matrix(const std::vector<std::vector<int>>& matrix) override;
-    virtual const std::vector<std::vector<int>>& get_confusion_matrix() const override;
-
-    virtual void set_predicted_labels(const std::vector<int>& labels) override;
-    virtual const std::vector<int>& get_predicted_labels() const override;
 };
 }

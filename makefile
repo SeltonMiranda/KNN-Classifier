@@ -1,6 +1,6 @@
 #Flags de compilacao
-CFLAGS=-Wall -Wextra -pedantic -std=c++23
-LDFLAGS = `pkg-config --cflags --libs opencv4 tinyxml2`
+CFLAGS=-Wall -Wextra -pedantic -std=c++23 -g
+LDFLAGS =`pkg-config --cflags --libs opencv4 tinyxml2`
 
 # Diretorios
 SRC_DIR =src
@@ -34,4 +34,4 @@ $(BUILD_DIR)/%.o: $(SRCS_FACTORY)/%.cpp
 	g++ $(CFLAGS) -I$(INCLUDE_DIR) -c $< -o $@ -g
 
 clean:
-	rm -rf $(BUILD_DIR)/*.o $(MAIN) *.o *.csv
+	rm -rf $(BUILD_DIR)/*.o $(MAIN) *.o $(BUILD_DIR)

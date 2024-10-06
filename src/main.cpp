@@ -1,29 +1,78 @@
-#include "../includes/factory/LBPFactory.hpp"
-#include "../includes/factory/CropperFactory.hpp"
-#include "../includes/constants/Constants.hpp"
 #include "../includes/KNN.hpp"
+#include "../includes/DataHandler.hpp"
+#include "../includes/Descriptor.hpp"
+#include "../includes/exception/Exceptions.hpp"
+#include "../includes/constants/Constants.hpp"
+#include <filesystem>
 
 int main() {
-  c_knn::KNN classifier{3, c_knn::LBPFactory::createBasicLBP(),
-          c_knn::CropperFactory::createPKLotCropper(c_knn::Constants::PKLOT_DIR)};
+  std::unique_ptr<c_knn::IDataHandler> handler{std::make_unique<c_knn::DataHandler>()};
+  handler->preProcessImageData(c_knn::Constants::PKLOT_DIR);
+  return 0;
+}
+
+int main2() {
+  std::unique_ptr<c_knn::IClassifier> knn{std::make_unique<c_knn::KNN>(3)};
+  std::unique_ptr<c_knn::IDataHandler> handler{std::make_unique<c_knn::DataHandler>()};
+  std::unique_ptr<c_knn::ILocalBinaryPatterns> descriptor{std::make_unique<c_knn::Descriptor>()};
+  std::vector<std::vector<float>> X_test;
+  std::vector<int> y_test;
 
   try {
-    classifier.checks_if_data_exists();
+    if (!std::filesystem::exists(c_knn::Constants::PKLOTSEGMENTED_DIR)) {
+      std::cout << "Processing images..." << std::endl;
+      handler->preProcessImageData(c_knn::Constants::PKLOT_DIR);
+      std:: cout << "Done!" << std::endl;
+    }
+    
+    if (!std::filesystem::exists(c_knn::Constants::PUCPR_CSV)) {
+      std::cout << "Creating pucpr_norm.csv..." << std::endl;
+      handler->generate_data(c_knn::Constants::PUCPR, c_knn::Constants::PUCPR_CSV, descriptor);
+      std:: cout << "Done!" << std::endl;
+    }
 
-    float accuracy{0};
-    classifier.set_sample_train(c_knn::Constants::PUCPR_CSV);
-    classifier.set_sample_test(c_knn::Constants::UFPR04_CSV);
+    if (!std::filesystem::exists(c_knn::Constants::UFPR04_CSV)) {
+      std::cout << "Creating ufpr04_norm.csv..." << std::endl;
+      handler->generate_data(c_knn::Constants::UFPR04, c_knn::Constants::UFPR04_CSV, descriptor);
+      std:: cout << "Done!" << std::endl;
+    }
 
-    classifier.set_predicted_labels(classifier.classify(classifier.get_x_test()));
-    classifier.set_confusion_matrix(classifier.generate_confusion_matrix(classifier.get_predicted_labels(),
-                                                                         classifier.get_y_test()));
+    if (!std::filesystem::exists(c_knn::Constants::UFPR05_CSV)) {
+      std::cout << "Creating ufpr05_norm.csv..." << std::endl;
+      handler->generate_data(c_knn::Constants::UFPR05, c_knn::Constants::UFPR05_CSV, descriptor);
+      std:: cout << "Done!" << std::endl;
+    }
+    
+    knn->set_sample_train(handler, c_knn::Constants::PUCPR_CSV);
+    handler->load_sample(c_knn::Constants::UFPR04_CSV, X_test, y_test); 
 
-    accuracy = classifier.accuracy(classifier.get_confusion_matrix());
-    std::cout << "Accuracy: " << accuracy << std::endl;
-
+  } catch (c_knn::FileException& e) {
+    std::cout << e.what() << std::endl;
+  } catch (c_knn::ImageException& e) {
+    std::cout << e.what() << std::endl;
+  } catch (c_knn::DirectoryException& e) {
+    std::cout << e.what() << std::endl;
   } catch (std::exception& e) {
+    std::cout << "Unknown error!" << std::endl;
     std::cout << e.what() << std::endl;
   }
 
+  std::cout << "Classifying PUCPR x UFPR04" << std::endl;
+  std::vector<int> predicted_labels{knn->classify(X_test)};
+  std::vector<std::vector<int>> matrix{knn->confusion_matrix(predicted_labels, y_test)};
+  float accuracy{knn->accuracy(matrix)};
+  std::cout << "Accuracy = " << accuracy << std::endl;
+
+  try {
+    handler->load_sample(c_knn::Constants::UFPR05_CSV, X_test, y_test); 
+  } catch (std::exception& e) {
+    std::cout << e.what() << std::endl;
+  }
+  
+  std::cout << "Classifying PUCPR x UFPR05" << std::endl;
+  predicted_labels = knn->classify(X_test);
+  matrix = knn->confusion_matrix(predicted_labels, y_test);
+  accuracy = knn->accuracy(matrix);
+  std::cout << "Accuracy = " << accuracy << std::endl;
   return 0;
 }
