@@ -12,25 +12,25 @@
 namespace c_knn {
 
 void DataHandler::load_sample(const std::string& filename, 
-                              std::vector<std::vector<float>>&x, std::vector<int>& y) const 
+                              std::vector<c_knn::FeaturesVec>& x,
+                              c_knn::LabelsVec& y) const 
 {
   std::ifstream csv{filename};
-  if (!csv) throw c_knn::FileException{"Error: Couldn´t open " + filename};
+  if (!csv)
+    throw c_knn::FileException{"Error: Couldn´t open " + filename};
 
   std::string row;
   while (std::getline(csv, row)) {
     std::istringstream rowStream(row);
     std::string value;
-    std::vector <float> features_vector;
+    c_knn::FeaturesVec fv;
 
-    while (std::getline(rowStream, value, ',')) {
-      features_vector.push_back(std::stof(value));
-    }
+    while (std::getline(rowStream, value, ','))
+      fv.push_back(std::stof(value));
 
-    int label{static_cast<int>(features_vector.back())};
-    features_vector.pop_back();
-
-    x.push_back(features_vector);
+    int label{static_cast<int>(fv.back())};
+    fv.pop_back();
+    x.push_back(fv);
     y.push_back(label);
   }
   csv.close();
@@ -75,17 +75,17 @@ void DataHandler::generate_data(const std::string& inputPath, const std::string 
       }
 
       cv::Mat histogram{descriptor->histogram(image)};
-      std::vector<float> features_vector(histogram.begin<float>(), histogram.end<float>());
+      c_knn::FeaturesVec fv(histogram.begin<float>(), histogram.end<float>());
       if (entry.path().parent_path().filename() == "Occupied")
-        this->save_data(features_vector, output, 1);
+        this->save_data(fv, output, 1);
       else 
-        this->save_data(features_vector, output, 0);
+        this->save_data(fv, output, 0);
     }
   }
 }
 
-void DataHandler::save_data(const std::vector<float>& vector, std::ofstream& filename, int label) const {
-  std::vector<float>::const_iterator it{begin(vector)};
+void DataHandler::save_data(const c_knn::FeaturesVec& vector, std::ofstream& filename, int label) const {
+  c_knn::FeaturesVec::const_iterator it{begin(vector)};
   for (; it != end(vector); ++it) {
     filename << *it;
     filename << ",";

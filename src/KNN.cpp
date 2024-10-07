@@ -4,9 +4,11 @@
 namespace c_knn {
 
 KNN::KNN(size_t k): k_nearest(k) {}
+KNN::KNN(size_t k, const c_knn::FeaturesVec& X_train, const c_knn::LabelsVec& y_train) :
+  k_nearest{k}, X_train{X_train}, y_train{y_train} {};
 
-float KNN::euclidean_distance(const std::vector<float>& vector_test,
-                          const std::vector<float>& vector_train) const 
+float KNN::euclidean_distance(const c_knn::FeaturesVec& vector_test,
+                              const c_knn::FeaturesVec& vector_train) const 
 {
   float sum{0.0f};
   for (size_t i = 0; i < vector_test.size(); i++) {
@@ -20,18 +22,18 @@ void KNN::set_sample_train(const std::unique_ptr<IDataHandler>& handler, const s
   handler->load_sample(filename, this->X_train, this->y_train);
 }
 
-const std::vector<std::vector<float>>& KNN::get_X_train() const { return this->X_train; }
+const std::vector<c_knn::FeaturesVec>& KNN::get_X_train() const { return this->X_train; }
 
-const std::vector<int>& KNN::get_y_train() const { return this->y_train; }
+const c_knn::LabelsVec& KNN::get_y_train() const { return this->y_train; }
 
-std::vector<int> KNN::classify(const std::vector<std::vector<float>>& x_test) const {
-  std::vector<int> classified_labels;
+c_knn::LabelsVec KNN::classify(const std::vector<c_knn::FeaturesVec>& x_test) const {
+  c_knn::LabelsVec classified_labels;
   for (const auto& feature_vector_test : x_test) {
     c_knn::MinHeap minHeap;
+
     for (std::size_t i = 0; i < this->X_train.size(); ++i) {
       float distance{this->euclidean_distance(feature_vector_test, this->X_train[i])};
       minHeap.push({distance, i});
-
       if (minHeap.size() > this->k_nearest) minHeap.pop();
     }
 
@@ -48,14 +50,13 @@ std::vector<int> KNN::classify(const std::vector<std::vector<float>>& x_test) co
                                              { return a.second < b.second; }))->first;
     classified_labels.push_back(classified_label);
   }
-
   return classified_labels;
 }
 
-std::vector<std::vector<int>> KNN::confusion_matrix(const std::vector<int>& classified_labels, 
-                                                             const std::vector<int>& true_labels) const 
+std::vector<c_knn::LabelsVec> KNN::confusion_matrix(const c_knn::LabelsVec& classified_labels, 
+                                                             const c_knn::LabelsVec& true_labels) const 
 {
-  std::vector<std::vector<int>> matrix{2, std::vector<int>(2, 0)}; 
+  std::vector<c_knn::LabelsVec> matrix{2, c_knn::LabelsVec(2, 0)}; 
   for (size_t i = 0; i < true_labels.size(); i++) {
     int true_label{true_labels[i]};
     int classified_label{classified_labels[i]};
@@ -64,7 +65,7 @@ std::vector<std::vector<int>> KNN::confusion_matrix(const std::vector<int>& clas
   return matrix;
 }
 
-float KNN::accuracy(const std::vector<std::vector<int>>& confusion_matrix) const {
+float KNN::accuracy(const std::vector<c_knn::LabelsVec>& confusion_matrix) const {
   int correct_classified{0};
   int total{0};
 

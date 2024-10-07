@@ -11,8 +11,8 @@ public:
   }
 };
 
-using FeaturesVector = std::vector<float>;
-
+using LabelsVec = std::vector<int>;
+using FeaturesVec = std::vector<float>;
 using MinHeap = std::priority_queue<std::pair<float, int>, std::vector<std::pair<float, int>>, cmp>;
 
 }
