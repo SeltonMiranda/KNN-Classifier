@@ -15,44 +15,28 @@ void Cropper::makeCrop(const std::string& path) {
   if (!std::filesystem::exists(path))
     throw c_knn::DirectoryException{"Could not find directory " + path + "\n"};
 
-  const std::string new_dir{"PKLotSegmented"};
-  std::filesystem::create_directory(new_dir);
-
   std::vector<std::string> xml;
   std::vector<std::string> jpg;
+  //std::vector<std::pair<std::string, std::string>> data;
   for (const auto& file : std::filesystem::recursive_directory_iterator(path)) {
     if (file.is_regular_file()) {
-
       if (file.path().extension().string() == ".xml") xml.push_back(file.path().string());
       else if (file.path().extension().string() == ".jpg") jpg.push_back(file.path().string());
 
-    } else if (file.is_directory()) {
-
-      const std::string relative_path{std::filesystem::relative(file.path(), path).string()};
-      const std::string new_path{new_dir + "/" + relative_path};
-      std::filesystem::create_directory(new_path);
-
-    }
+    } 
   }
 
-  std::sort(xml.begin(), xml.end());
-  std::sort(jpg.begin(), jpg.end());
-
+  std::sort(begin(xml), end(xml));
+  std::sort(begin(jpg), end(jpg));
   for (size_t i = 0; i < xml.size(); i++) {
-    std::cout << "xml: " << xml[i] << " jpg: " << jpg[i] << std::endl;
+    const std::string relative{std::filesystem::relative(xml[i], path).parent_path().string()};
+    const std::string emptyDir{"PKLotSegmented/" + relative + "/Empty"};
+    const std::string occupiedDir{"PKLotSegmented/" + relative + "/Occupied"};
+
+    std::filesystem::create_directory(emptyDir);
+    std::filesystem::create_directory(occupiedDir);
+    this->cropImages(jpg[i], xml[i], emptyDir, occupiedDir);
   }
-  exit(1);
-
-  //for (size_t i = 0; i < xml.size(); i++) {
-  //  const std::string relative{std::filesystem::relative(xml[i], path).parent_path().string()};
-  //  const std::string date_new_path{new_dir + "/" + relative};
-  //  const std::string emptyDir{date_new_path + "/Empty"};
-  //  const std::string occupiedDir{date_new_path + "/Occupied"};
-
-  //  std::filesystem::create_directory(emptyDir);
-  //  std::filesystem::create_directory(occupiedDir);
-  //  this->cropImages(jpg[i], xml[i], emptyDir, occupiedDir);
-  //}
 }
 
 void Cropper::cropImages(const std::string& imgPath, const std::string xmlPath,
@@ -72,7 +56,7 @@ void Cropper::cropImages(const std::string& imgPath, const std::string xmlPath,
 
   // Iterando pelo campo "space" do xml
   for (; space != nullptr; space = space->NextSiblingElement("space")) {
-    this->rect = this->extractXML(space); // Um nome melhor seria parseXML(), provavelmente
+    this->rect = this->extractXML(space); // Extraindo os dados do xml 
     cv::Mat rotatedImage;
     cv::Mat outputImage;
 

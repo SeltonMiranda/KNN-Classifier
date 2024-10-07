@@ -1,10 +1,9 @@
 #include "../includes/KNN.hpp"
+#include "../includes/typedefs/Typedefs.hpp"
 
 namespace c_knn {
 
 KNN::KNN(size_t k): k_nearest(k) {}
-
-
 
 float KNN::euclidean_distance(const std::vector<float>& vector_test,
                           const std::vector<float>& vector_train) const 
@@ -28,12 +27,7 @@ const std::vector<int>& KNN::get_y_train() const { return this->y_train; }
 std::vector<int> KNN::classify(const std::vector<std::vector<float>>& x_test) const {
   std::vector<int> classified_labels;
   for (const auto& feature_vector_test : x_test) {
-    auto cmp = [](const std::pair<float, int>& a, const std::pair<float, int>& b) {
-      return a.first < b.first;
-    };
-
-    std::priority_queue<std::pair<float, int>, std::vector<std::pair<float, int>>, decltype(cmp)> minHeap(cmp);
-
+    c_knn::MinHeap minHeap;
     for (std::size_t i = 0; i < this->X_train.size(); ++i) {
       float distance{this->euclidean_distance(feature_vector_test, this->X_train[i])};
       minHeap.push({distance, i});
