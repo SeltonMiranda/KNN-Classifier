@@ -13,11 +13,10 @@ namespace c_knn {
 
 void Cropper::makeCrop(const std::string& path) {
   if (!std::filesystem::exists(path))
-    throw c_knn::DirectoryException{"Could not find directory " + path + "\n"};
+    throw c_knn::DirectoryException{"Could not find directory " + path};
 
   std::vector<std::string> xml;
   std::vector<std::string> jpg;
-  //std::vector<std::pair<std::string, std::string>> data;
   for (const auto& file : std::filesystem::recursive_directory_iterator(path)) {
     if (file.is_regular_file()) {
       if (file.path().extension().string() == ".xml") xml.push_back(file.path().string());
@@ -79,9 +78,7 @@ void Cropper::cropImages(const std::string& imgPath, const std::string xmlPath,
     // Insere no diretório correspondente ao id extraído
     if (rect->occupied == 1) {
       cv::imwrite(occupiedDir + "/" + finalName, outputImage);
-      std::cout << occupiedDir + "/" + finalName << " occupied: " << rect->occupied << std::endl;
     } else if (rect->occupied == 0) {
-      std::cout << emptyDir + "/" + finalName << " occupied: " << rect->occupied << std::endl;
       cv::imwrite(emptyDir + "/" + finalName, outputImage);
     }
   }
@@ -95,7 +92,6 @@ std::unique_ptr<RectanglePrototype> Cropper::extractXML(tinyxml2::XMLElement* sp
   tinyxml2::XMLElement* size{rotatedRect->FirstChildElement("size")};
   tinyxml2::XMLElement* angle{rotatedRect->FirstChildElement("angle")};
 
-  // Aquisição dos atributos no xml
   space->QueryIntAttribute("id", &rect->id);
   space->QueryIntAttribute("occupied", &rect->occupied);
   center->QueryIntAttribute("x", &rect->center_x);
@@ -104,7 +100,6 @@ std::unique_ptr<RectanglePrototype> Cropper::extractXML(tinyxml2::XMLElement* sp
   size->QueryIntAttribute("h", &rect->height);
   angle->QueryIntAttribute("d", &rect->angle);
 
-  // Rotaciona o retângulo de acordo com o artigo  
   if (rect->angle <= -45) {
     rect->angle = 90 - std::abs(rect->angle);
     std::swap(rect->width, rect->height);

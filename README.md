@@ -19,13 +19,3 @@ The aim of this project is to build a machine learning pipeline that analyzes pa
 
 ### 📂 Dataset
 The dataset used comes from the [PKLot dataset](http://web.inf.ufpr.br/vri/databases/), which contains images of parking lots under various conditions. The dataset is organized by universities, and each university's data is processed and stored in separate CSV files.
-
-### 📊 Feature Extraction Details
-- **Method**: Local Binary Patterns (LBP)
-- **Neighbors**: 8
-- **Radius**: 1
-- **Output**: Histograms saved to CSV files
-
-### ⚙️ Classifier
-- **Algorithm**: K-Nearest Neighbors (KNN)
-- **Task**: Classify parking spaces as **empty** or **occupied**

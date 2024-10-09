@@ -12,9 +12,9 @@ class DataHandler : public IDataHandler {
     virtual void load_sample(const std::string& filename, 
                              std::vector<c_knn::FeaturesVec>&x,
                              c_knn::LabelsVec& y) const override;
-    virtual void preProcessImageData(const std::string& folder) const override;
+    virtual void preProcessImageData(const std::string& folder, const std::unique_ptr<ICrop>& cropper) const override;
     virtual void generate_data(const std::string& inputPath, const std::string outputFile,
                                const std::unique_ptr<ILocalBinaryPatterns>& descriptor) const override;
-    virtual void save_data(const c_knn::FeaturesVec&, std::ofstream& filename, int label) const override;  
+    virtual void write_to_csv(const c_knn::FeaturesVec&, std::ofstream& filename, int label) const override;  
 };
 } 

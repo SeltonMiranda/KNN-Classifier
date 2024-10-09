@@ -2,6 +2,7 @@
 #include "../includes/exception/Exceptions.hpp"
 #include "../includes/Cropper.hpp"
 
+#include <opencv2/core.hpp>
 #include <opencv4/opencv2/opencv.hpp>
 #include <filesystem>
 #include <fstream>
@@ -53,8 +54,7 @@ void DataHandler::copy_directory_structure(const std::string& dir_path) const {
   }
 }
 
-void DataHandler::preProcessImageData(const std::string& folder) const {
-  std::unique_ptr<ICrop> cropper{std::make_unique<Cropper>()};
+void DataHandler::preProcessImageData(const std::string& folder, const std::unique_ptr<ICrop>& cropper) const {
   this->copy_directory_structure(folder);
   cropper->makeCrop(folder);
 }
@@ -77,14 +77,14 @@ void DataHandler::generate_data(const std::string& inputPath, const std::string 
       cv::Mat histogram{descriptor->histogram(image)};
       c_knn::FeaturesVec fv(histogram.begin<float>(), histogram.end<float>());
       if (entry.path().parent_path().filename() == "Occupied")
-        this->save_data(fv, output, 1);
+        this->write_to_csv(fv, output, 1);
       else 
-        this->save_data(fv, output, 0);
+        this->write_to_csv(fv, output, 0);
     }
   }
 }
 
-void DataHandler::save_data(const c_knn::FeaturesVec& vector, std::ofstream& filename, int label) const {
+void DataHandler::write_to_csv(const c_knn::FeaturesVec& vector, std::ofstream& filename, int label) const {
   c_knn::FeaturesVec::const_iterator it{begin(vector)};
   for (; it != end(vector); ++it) {
     filename << *it;
